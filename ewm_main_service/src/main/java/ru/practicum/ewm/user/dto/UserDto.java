@@ -15,6 +15,7 @@ import javax.validation.constraints.NotNull;
 public class UserDto extends UserShortDto {
     @Email(regexp = ".+@.+\\..+")
     @Length(min = 6, max = 254)
+    @NotNull
     private String email;
 
     @Builder(builderMethodName = "childBuilder")
