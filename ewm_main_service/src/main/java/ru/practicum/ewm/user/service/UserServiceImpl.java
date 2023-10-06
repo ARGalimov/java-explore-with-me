@@ -16,11 +16,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static ru.practicum.ewm.constant.Constant.*;
-
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
+    private static final String INCORRECT_DATA_INPUT_MSG = "Incorrect data input";
+    private static final String INCORRECT_NAME_UNIQUE_REASON = "Field name must be unique";
+    private static final String NOT_FOUND_USER_MSG = "User not found";
+    private static final String NOT_FOUND_ID_REASON = "Incorrect Id";
+
     private final UserRepository userRepository;
 
     @Autowired

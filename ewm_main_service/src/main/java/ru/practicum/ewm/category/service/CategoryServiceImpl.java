@@ -1,7 +1,7 @@
 package ru.practicum.ewm.category.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.category.dto.CategoryDto;
@@ -13,23 +13,24 @@ import ru.practicum.ewm.exception.NotFoundException;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-
-import static ru.practicum.ewm.constant.Constant.*;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
-    private final CategoryRepository categoryRepository;
+    private static final String INCORRECT_DATA_INPUT_MSG = "Incorrect data input";
+    private static final String INCORRECT_NAME_UNIQUE_REASON = "Field name must be unique";
+    private static final String INCORRECT_CATEGORY_REL_REASON = "Category related to events";
+    private static final String NOT_FOUND_CATEGORY_MSG = "Category not found";
+    private static final String NOT_FOUND_ID_REASON = "Incorrect Id";
 
-    @Autowired
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
-    }
+    private final CategoryRepository categoryRepository;
 
     @Override
     public CategoryDto createCategory(CategoryDto categoryDto) {
-        checkCategoryName(categoryDto, null);
+        if (checkCategoryName(categoryDto, null)) {
+            throw new ConflictException(INCORRECT_DATA_INPUT_MSG, INCORRECT_NAME_UNIQUE_REASON);
+        }
         Category category = categoryRepository.save(CategoryMapper.toNewEntity(categoryDto));
         log.info("Created category {}", category.getId());
         return CategoryMapper.toDto(category);
@@ -38,14 +39,20 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategory(Integer catId) {
         Category category = getCategoryEntity(catId);
-        checkRelations(category);
+
+        if (!categoryRepository.findCategoryRelatedToEvents(category).isEmpty()) {
+            throw new ConflictException(INCORRECT_DATA_INPUT_MSG, INCORRECT_CATEGORY_REL_REASON);
+        }
+
         categoryRepository.deleteById(catId);
         log.info("Deleted category {} ", category);
     }
 
     @Override
     public CategoryDto updateCategory(Integer catId, CategoryDto categoryDto) {
-        checkCategoryName(categoryDto, catId);
+        if (checkCategoryName(categoryDto, catId)) {
+            throw new ConflictException(INCORRECT_DATA_INPUT_MSG, INCORRECT_NAME_UNIQUE_REASON);
+        }
         Category category = categoryRepository.save(CategoryMapper.toEntity(catId, categoryDto));
         log.info("Updated category {}", category);
         return CategoryMapper.toDto(category);
@@ -72,17 +79,10 @@ public class CategoryServiceImpl implements CategoryService {
         return category;
     }
 
-    private void checkCategoryName(CategoryDto categoryDto, Integer catId) {
-        Optional<Category> category = categoryRepository.findByName(categoryDto.getName());
-        if (category.isPresent() && !Objects.equals(catId, category.get().getId())) {
-            throw new ConflictException(INCORRECT_DATA_INPUT_MSG, INCORRECT_NAME_UNIQUE_REASON);
-        }
-    }
-
-    private void checkRelations(Category category) {
-        List<Category> categories = categoryRepository.findCategoryRelatedToEvents(category);
-        if (categories.size() > 0) {
-            throw new ConflictException(INCORRECT_DATA_INPUT_MSG, INCORRECT_CATEGORY_REL_REASON);
-        }
+    private boolean checkCategoryName(CategoryDto categoryDto, Integer catId) {
+        return categoryRepository.findByName(categoryDto.getName())
+                .map(Category::getId)
+                .filter(id -> !Objects.equals(catId, id))
+                .isPresent();
     }
 }

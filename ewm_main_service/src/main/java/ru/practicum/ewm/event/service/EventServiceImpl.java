@@ -38,14 +38,38 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static ru.practicum.ewm.constant.Constant.*;
 
 @Service
 @Slf4j
 public class EventServiceImpl implements EventService {
+    private static final Short HOURS_BEFORE_EVENT = 2;
+    private static final Short HOUR_BEFORE_EVENT = 1;
+    private static final String START = "2000-01-01 00:00:00";
+    private static final String END = "2100-01-01 00:00:00";
+    private static final String URI = "/events/";
+    private static final String UNIQUE = "true";
+    private static final String APPLICATION_NAME = "ewm-main-service";
+    private static final String INCORRECT_TIME_MSG = "Incorrect time input";
+    private static final String INCORRECT_TIME_REASON = "The time of event must be at least in 2 hours before published";
+    private static final String INCORRECT_STATE_MSG = "Incorrect state for updating";
+    private static final String INCORRECT_STATE_REASON = "The event can't be published when updating";
+    private static final String INCORRECT_EVENT_ANNOTATION = "Event annotation is incorrect";
+    private static final String INCORRECT_EVENT_DECSRIPTION = "Event discription is incorrect";
+    private static final String INCORRECT_DATA_INPUT_MSG = "Incorrect data input";
+    private static final String NOT_FOUND_EVENT_MSG = "Event not found";
+    private static final String NOT_FOUND_USER_MSG = "User not found";
+    private static final String NOT_FOUND_ID_REASON = "Incorrect Id";
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private final EventRepository eventRepository;
     private final CategoryService categoryService;
     private final UserService userService;

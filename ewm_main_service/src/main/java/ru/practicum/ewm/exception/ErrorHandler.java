@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.validation.ConstraintViolationException;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
-
-import static ru.practicum.ewm.constant.Constant.FORMAT;
 
 @RestControllerAdvice("ru.practicum.ewm")
 public class ErrorHandler {
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)

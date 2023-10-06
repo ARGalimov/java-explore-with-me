@@ -19,7 +19,7 @@ public class UpdateCompilationDto {
     @Length(min = 2, max = 50)
     private String title;
 
-    public Boolean getPinned() {
-        return !Objects.isNull(pinned) && pinned;
+    public boolean getPinned() {
+        return Objects.nonNull(pinned) && pinned;
     }
 }

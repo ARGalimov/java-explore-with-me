@@ -2,7 +2,11 @@ package ru.practicum.ewm.event.mapper;
 
 import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.model.Category;
-import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.StateAction;
+import ru.practicum.ewm.event.dto.UpdateEventDto;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.exception.ConflictException;
@@ -14,14 +18,16 @@ import ru.practicum.ewm.user.mapper.UserMapper;
 import ru.practicum.ewm.user.model.User;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static ru.practicum.ewm.constant.Constant.*;
-
 public class EventMapper {
+    private static final String INCORRECT_EVENT_STATE_MSG = "Impossible to public";
+    private static final String INCORRECT_EVENT_STATE_REASON = "Event is published or canceled";
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static Event toNewEntity(NewEventDto newEventDto, Category category, User initiator, Location location) {
         LocalDateTime current = LocalDateTime.now();
@@ -85,29 +91,28 @@ public class EventMapper {
                 ? getState(updateEventDto.getStateAction(), event) : event.getState();
         return Event.builder()
                 .id(event.getId())
-                .annotation(Objects.nonNull(updateEventDto.getAnnotation())
-                        ? updateEventDto.getAnnotation() : event.getAnnotation())
-                .category(Objects.nonNull(category) ? category : event.getCategory())
+                .annotation(firstOrDefault(updateEventDto.getAnnotation(), event.getAnnotation()))
+                .category(firstOrDefault(category, event.getCategory()))
                 .requests(event.getRequests())
                 .createdOn(event.getCreatedOn())
-                .description(Objects.nonNull(updateEventDto.getDescription())
-                        ? updateEventDto.getDescription() : event.getDescription())
+                .description(firstOrDefault(updateEventDto.getDescription(), event.getDescription()))
                 .eventDate(Objects.nonNull(updateEventDto.getEventDate())
                         ? LocalDateTime.parse(updateEventDto.getEventDate(), FORMAT) : event.getEventDate())
                 .initiator(event.getInitiator())
-                .location(Objects.nonNull(location) ? location : event.getLocation())
+                .location(firstOrDefault(location, event.getLocation()))
                 .paid(Objects.nonNull(updateEventDto.getPaid()) ? updateEventDto.getPaid() : event.getPaid())
-                .participantLimit(Objects.nonNull(updateEventDto.getParticipantLimit())
-                        ? updateEventDto.getParticipantLimit() : event.getParticipantLimit())
+                .participantLimit(firstOrDefault(updateEventDto.getParticipantLimit(), event.getParticipantLimit()))
                 .publishedOn(Objects.nonNull(event.getPublishedOn())
                         ? event.getPublishedOn() : Objects.equals(state, State.PUBLISHED)
                         ? LocalDateTime.now() : null)
-                .requestModeration(Objects.nonNull(updateEventDto.getRequestModeration())
-                        ? updateEventDto.getRequestModeration() : event.getRequestModeration())
+                .requestModeration(firstOrDefault(updateEventDto.getRequestModeration(), event.getRequestModeration()))
                 .state(state)
-                .title(Objects.nonNull(updateEventDto.getTitle())
-                        ? updateEventDto.getTitle() : event.getTitle())
+                .title(firstOrDefault(updateEventDto.getTitle(), event.getTitle()))
                 .build();
+    }
+
+    private static <T> T firstOrDefault(T value, T defaultValue) {
+        return Objects.nonNull(value) ? value : defaultValue;
     }
 
     public static List<EventShortDto> toShortDtos(List<Event> events, Map<Integer, Integer> views) {
@@ -127,22 +132,19 @@ public class EventMapper {
     }
 
     private static State getState(StateAction stateAction, Event event) {
-        State state = null;
         switch (stateAction) {
             case SEND_TO_REVIEW:
-                state = State.PENDING;
-                break;
+                return State.PENDING;
             case CANCEL_REVIEW:
             case REJECT_EVENT:
                 checkEventState(event);
-                state = State.CANCELED;
-                break;
+                return State.CANCELED;
             case PUBLISH_EVENT:
                 checkEventState(event);
-                state = State.PUBLISHED;
-                break;
+                return State.PUBLISHED;
+            default:
+                return null;
         }
-        return state;
     }
 
     private static Integer sumConfirmedRequests(List<Request> requests) {

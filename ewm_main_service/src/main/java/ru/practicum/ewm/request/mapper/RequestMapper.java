@@ -8,13 +8,14 @@ import ru.practicum.ewm.request.model.RequestStatus;
 import ru.practicum.ewm.user.model.User;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static ru.practicum.ewm.constant.Constant.FORMAT;
-
 public class RequestMapper {
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     public static Request toNewEntity(User user, Event event) {
         LocalDateTime current = LocalDateTime.now();
         return Request.builder()

@@ -14,14 +14,19 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.exception.NotFoundException;
 
-import java.util.*;
-
-import static ru.practicum.ewm.constant.Constant.NOT_FOUND_COMPILATION_MSG;
-import static ru.practicum.ewm.constant.Constant.NOT_FOUND_ID_REASON;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 @Slf4j
 public class CompilationServiceImpl implements CompilationService {
+    private static final String NOT_FOUND_COMPILATION_MSG = "Compilation not found";
+    private static final String NOT_FOUND_ID_REASON = "Incorrect Id";
     private final CompilationRepository compilationRepository;
     private final EventService eventService;
 
@@ -44,7 +49,9 @@ public class CompilationServiceImpl implements CompilationService {
     public void deleteById(Integer compId) {
         if (compilationRepository.findById(compId).isPresent()) {
             compilationRepository.deleteById(compId);
-        } else throw new NotFoundException(NOT_FOUND_COMPILATION_MSG, NOT_FOUND_ID_REASON);
+        } else {
+            throw new NotFoundException(NOT_FOUND_COMPILATION_MSG, NOT_FOUND_ID_REASON);
+        }
     }
 
     @Override
@@ -62,7 +69,9 @@ public class CompilationServiceImpl implements CompilationService {
             log.info("Updated compilation {}", compilation);
             Map<Integer, Integer> views = eventService.getStats(events);
             return CompilationMapper.toDto(compilation, views);
-        } else throw new NotFoundException(NOT_FOUND_COMPILATION_MSG, NOT_FOUND_ID_REASON);
+        } else {
+            throw new NotFoundException(NOT_FOUND_COMPILATION_MSG, NOT_FOUND_ID_REASON);
+        }
     }
 
     @Override

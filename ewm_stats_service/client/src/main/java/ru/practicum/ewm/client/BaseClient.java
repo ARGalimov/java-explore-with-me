@@ -1,7 +1,11 @@
 package ru.practicum.ewm.client;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.client.RestTemplate;
 import ru.practicum.ewm.dto.ViewStats;
@@ -17,13 +21,6 @@ public class BaseClient {
         this.rest = rest;
     }
 
-    private HttpHeaders defaultHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        return headers;
-    }
-
     private static ResponseEntity<List<ViewStats>> prepareGatewayResponse(ResponseEntity<List<ViewStats>> response) {
         if (Objects.isNull(response)) {
             return null;
@@ -36,6 +33,13 @@ public class BaseClient {
             return responseBuilder.body(response.getBody());
         }
         return responseBuilder.build();
+    }
+
+    private HttpHeaders defaultHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return headers;
     }
 
     protected ResponseEntity<List<ViewStats>> get(String path, @Nullable Map<String, Object> parameters) {

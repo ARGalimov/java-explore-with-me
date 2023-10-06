@@ -25,11 +25,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static ru.practicum.ewm.constant.Constant.*;
-
 @Service
 @Slf4j
 public class RequestServiceImpl implements RequestService {
+    private static final String INCORRECT_REQUEST_STATUS_MSG = "The request must have the status pending";
+    private static final String INCORRECT_REQUEST_STATUS_REASON = "Incorrect id of request for modification";
+    private static final String INCORRECT_REQUEST_MSG = "The request can't be created";
+    private static final String INCORRECT_REQUEST_UPDATE_MSG = "The request can't be modified";
+    private static final String INCORRECT_REQUEST_REASON = "Such request already exist";
+    private static final String INCORRECT_REQUEST_EVENT_LIMIT_REASON = "Event already reached the limit";
+    private static final String INCORRECT_REQUESTER_REASON = "Requester can't be initiator of event";
+    private static final String INCORRECT_REQUEST_EVENT_STATE_REASON = "Event is not published";
+    private static final String NOT_FOUND_REQUEST_MSG = "Request not found";
+    private static final String NOT_FOUND_EVENT_MSG = "Event not found";
+    private static final String NOT_FOUND_USER_MSG = "User not found";
+    private static final String NOT_FOUND_ID_REASON = "Incorrect Id";
+
     private final RequestRepository requestRepository;
     private final EventService eventService;
     private final UserService userService;
@@ -114,7 +125,6 @@ public class RequestServiceImpl implements RequestService {
     private Integer getAvailableSpace(Event event) {
         Integer limit = event.getParticipantLimit();
         if (limit == 0) {
-//            throw new ConflictException(INCORRECT_EVENT_LIMIT_MSG, INCORRECT_EVENT_LIMIT_REASON);
             return 1;
         }
         List<Request> confirmedRequest = requestRepository.getRequestByStatusIs(RequestStatus.CONFIRMED, event);
