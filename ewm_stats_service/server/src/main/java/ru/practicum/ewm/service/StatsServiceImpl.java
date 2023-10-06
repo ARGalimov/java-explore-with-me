@@ -1,5 +1,6 @@
 package ru.practicum.ewm.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.dto.EndpointHit;
@@ -10,10 +11,18 @@ import ru.practicum.ewm.storage.StatsRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class StatsServiceImpl implements StatsService {
     private final StatsRepository statsRepository;
 
@@ -27,6 +36,11 @@ public class StatsServiceImpl implements StatsService {
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime start = LocalDateTime.parse(startStr, format);
         LocalDateTime end = LocalDateTime.parse(endStr, format);
+
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("Некорректные даты в запросе");
+        }
+
         if (Objects.nonNull(uris)) {
             if (unique) {
                 return getUniqueStatsByUri(start, end, uris);
@@ -56,23 +70,25 @@ public class StatsServiceImpl implements StatsService {
 
     private List<ViewStats> getAllStats(LocalDateTime start, LocalDateTime end) {
         List<Stats> statsList = statsRepository.findAllByTimestampIsBetween(start, end);
+        log.info("Find non-uniq statsList {}", statsList);
         return getResponseStatsDtos(statsList);
     }
 
     private List<ViewStats> getUniqueStatsByUri(LocalDateTime start, LocalDateTime end, List<String> uris) {
-        List<Stats> statsList = statsRepository.findAllByUriAndTimestampIsBetween(uris, start, end);
+        List<Stats> statsList = statsRepository.findAllByUrisAndTimestampIsBetween(uris, start, end);
         statsList = getUniqueStats(statsList);
         return getResponseStatsDtos(statsList);
     }
 
     private List<ViewStats> getAllStatsByUri(LocalDateTime start, LocalDateTime end, List<String> uris) {
-        List<Stats> statsList = statsRepository.findAllByUriAndTimestampIsBetween(uris, start, end);
+        List<Stats> statsList = statsRepository.findAllByUrisAndTimestampIsBetween(uris, start, end);
         return getResponseStatsDtos(statsList);
     }
 
     private List<Stats> getUniqueStats(List<Stats> statsList) {
         Set<String> uniqueIps = new HashSet<>();
         List<Stats> uniqueStats = new ArrayList<>();
+        log.info("Reading uniq statsList {}", statsList);
         for (Stats stats : statsList) {
             String ip = stats.getIp();
             if (uniqueIps.add(ip)) {
@@ -83,12 +99,14 @@ public class StatsServiceImpl implements StatsService {
     }
 
     private List<ViewStats> getResponseStatsDtos(List<Stats> statsList) {
-        Set<String> uniqueUris = new HashSet<>();
+        Set<String> uris = new HashSet<>();
         List<ViewStats> response = new ArrayList<>();
+        log.info("Getting statsList {}", statsList);
         for (Stats stats : statsList) {
             String uri = stats.getUri();
-            if (uniqueUris.add(uri)) {
+            if (!uris.contains(uri)) {
                 response.addAll(getStatByApp(statsList, uri));
+                uris.add(uri);
             }
         }
         return response.stream()
@@ -97,15 +115,29 @@ public class StatsServiceImpl implements StatsService {
     }
 
     private List<ViewStats> getStatByApp(List<Stats> statsList, String uri) {
+        log.info("Getting StatByApp statsList {}", statsList);
+        List<ViewStats> statsByApp = new ArrayList<>();
         Map<String, Integer> counter = countByApp(statsList, uri);
-        return counter.entrySet().stream()
-                .map(entry -> StatsMapper.toResponseDto(entry.getKey(), uri, entry.getValue()))
-                .collect(Collectors.toList());
+        for (Map.Entry<String, Integer> entry : counter.entrySet()) {
+            statsByApp.add(StatsMapper.toResponseDto(entry.getKey(), uri, entry.getValue()));
+        }
+        return statsByApp;
     }
 
     private Map<String, Integer> countByApp(List<Stats> statsList, String uri) {
-        return statsList.stream()
-                .filter(stats -> Objects.equals(stats.getUri(), uri))
-                .collect(Collectors.groupingBy(Stats::getApp, Collectors.summingInt(x -> 1)));
+        log.info("Counting StatByApp statsList {}", statsList);
+        Map<String, Integer> counter = new HashMap<>();
+        for (Stats stats : statsList) {
+            if (Objects.equals(stats.getUri(), uri)) {
+                String app = stats.getApp();
+                if (counter.containsKey(app)) {
+                    int count = counter.get(app);
+                    counter.put(app, count + 1);
+                } else {
+                    counter.put(app, 1);
+                }
+            }
+        }
+        return counter;
     }
 }

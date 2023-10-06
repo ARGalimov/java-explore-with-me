@@ -8,7 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.ewm.dto.EndpointHit;
+import ru.practicum.ewm.dto.ViewStats;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -24,7 +26,7 @@ public class StatsClient extends BaseClient {
         );
     }
 
-    public ResponseEntity<Object> getStats(String start, String end, String uris, String unique) {
+    public ResponseEntity<List<ViewStats>> getStats(String start, String end, String uris, String unique) {
         if (Objects.nonNull(uris)) {
             Map<String, Object> parameters = Map.of(
                     "start", start,
@@ -43,13 +45,12 @@ public class StatsClient extends BaseClient {
         }
     }
 
-    public ResponseEntity<Object> createStats(EndpointHit endpointHit) {
-        ResponseEntity<Object> response = post("/hit", endpointHit);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            return ResponseEntity
+    public void createStats(EndpointHit endpointHit) {
+        ResponseEntity<List<ViewStats>> response = post("/hit", endpointHit);
+        if (Objects.isNull(response)) {
+            ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body("Информация сохранена");
         }
-        return response;
     }
 }
