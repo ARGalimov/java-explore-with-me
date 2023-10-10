@@ -65,6 +65,7 @@ public class RatingMapper {
         }
         return new ArrayList<>(dtoMap.values());
     }
+
     private static InitiatorRatingDto toInitiatorDto(LikeDislike likeDislike, Event event) {
         return InitiatorRatingDto.builder()
                 .initiator(UserMapper.toShortDto(event.getInitiator()))

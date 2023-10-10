@@ -81,6 +81,7 @@ public class EventPrivateController {
         log.info("Updating status for requests={} for event={} from user={}", requestStatusUpdateDto, eventId, userId);
         return eventService.updateEventRequestsStatus(eventId, userId, requestStatusUpdateDto);
     }
+
     @PostMapping(value = "/{eventId}/rating")
     @ResponseStatus(HttpStatus.CREATED)
     public EventShortDto addRateToEvent(@PathVariable Integer userId, @PathVariable Integer eventId,
