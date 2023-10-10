@@ -12,6 +12,8 @@ import ru.practicum.ewm.compilation.model.Compilation;
 import ru.practicum.ewm.compilation.storage.CompilationRepository;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.rating.dto.RatingDto;
+import ru.practicum.ewm.rating.service.RatingService;
 import ru.practicum.ewm.exception.NotFoundException;
 
 import java.util.ArrayList;
@@ -29,11 +31,13 @@ public class CompilationServiceImpl implements CompilationService {
     private static final String NOT_FOUND_ID_REASON = "Incorrect Id";
     private final CompilationRepository compilationRepository;
     private final EventService eventService;
+    private final RatingService ratingService;
 
     @Autowired
-    public CompilationServiceImpl(CompilationRepository compilationRepository, EventService eventService) {
+    public CompilationServiceImpl(CompilationRepository compilationRepository, EventService eventService, RatingService ratingService) {
         this.compilationRepository = compilationRepository;
         this.eventService = eventService;
+        this.ratingService = ratingService;
     }
 
     @Override
@@ -42,7 +46,8 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.save(CompilationMapper.toNewEntity(newCompilationDto, events));
         log.info("Created compilation {}", compilation);
         Map<Integer, Integer> views = eventService.getStats(events);
-        return CompilationMapper.toDto(compilation, views);
+        Map<Integer, RatingDto> ratings = ratingService.getRatingsByEvents(events);
+        return CompilationMapper.toDto(compilation, views, ratings);
     }
 
     @Override
@@ -68,7 +73,8 @@ public class CompilationServiceImpl implements CompilationService {
             compilation = compilationRepository.save(compilation);
             log.info("Updated compilation {}", compilation);
             Map<Integer, Integer> views = eventService.getStats(events);
-            return CompilationMapper.toDto(compilation, views);
+            Map<Integer, RatingDto> ratings = ratingService.getRatingsByEvents(events);
+            return CompilationMapper.toDto(compilation, views, ratings);
         } else {
             throw new NotFoundException(NOT_FOUND_COMPILATION_MSG, NOT_FOUND_ID_REASON);
         }
@@ -82,7 +88,8 @@ public class CompilationServiceImpl implements CompilationService {
             events.addAll(compilation.getEvents());
         }
         Map<Integer, Integer> views = new HashMap<>(eventService.getStats(new ArrayList<>(events)));
-        return CompilationMapper.toDtos(compilations, views);
+        Map<Integer, RatingDto> ratings =  new HashMap<>(ratingService.getRatingsByEvents(new ArrayList<>(events)));
+        return CompilationMapper.toDtos(compilations, views, ratings);
     }
 
     @Override
@@ -90,7 +97,8 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_COMPILATION_MSG, NOT_FOUND_ID_REASON));
         Map<Integer, Integer> views = eventService.getStats(compilation.getEvents());
-        return CompilationMapper.toDto(compilation, views);
+        Map<Integer, RatingDto> ratings = ratingService.getRatingsByEvents(compilation.getEvents());
+        return CompilationMapper.toDto(compilation, views, ratings);
     }
 
     private List<Event> getEvents(NewCompilationDto newCompilationDto) {

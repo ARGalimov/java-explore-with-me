@@ -6,6 +6,7 @@ import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.UpdateEventDto;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.rating.model.Rate;
 import ru.practicum.ewm.request.dto.RequestDto;
 import ru.practicum.ewm.request.dto.RequestStatusUpdateDto;
 import ru.practicum.ewm.request.dto.RequestsByStatusDto;
@@ -42,4 +43,8 @@ public interface EventService {
     EventFullDto getEventById(Integer eventId, HttpServletRequest request);
 
     List<Event> findByIds(List<Integer> eventsId);
+
+    EventShortDto addRateToEvent(Integer userId, Integer eventId, Rate rate);
+
+    EventShortDto deleteRateFromEvent(Integer userId, Integer eventId);
 }

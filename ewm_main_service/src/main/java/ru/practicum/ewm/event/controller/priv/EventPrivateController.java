@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +20,7 @@ import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.UpdateEventDto;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.rating.model.Rate;
 import ru.practicum.ewm.request.dto.RequestDto;
 import ru.practicum.ewm.request.dto.RequestStatusUpdateDto;
 import ru.practicum.ewm.request.dto.RequestsByStatusDto;
@@ -78,5 +80,19 @@ public class EventPrivateController {
                                                     @Valid @RequestBody RequestStatusUpdateDto requestStatusUpdateDto) {
         log.info("Updating status for requests={} for event={} from user={}", requestStatusUpdateDto, eventId, userId);
         return eventService.updateEventRequestsStatus(eventId, userId, requestStatusUpdateDto);
+    }
+    @PostMapping(value = "/{eventId}/rating")
+    @ResponseStatus(HttpStatus.CREATED)
+    public EventShortDto addRateToEvent(@PathVariable Integer userId, @PathVariable Integer eventId,
+                                        @RequestParam Rate rate) {
+        log.info("Adding rate={} event={} from user={}", rate, eventId, userId);
+        return eventService.addRateToEvent(userId, eventId, rate);
+    }
+
+    @DeleteMapping(value = "/{eventId}/rating")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public EventShortDto deleteRateFromEvent(@PathVariable Integer userId, @PathVariable Integer eventId) {
+        log.info("Deleting rate from event={} from user={}", eventId, userId);
+        return eventService.deleteRateFromEvent(userId, eventId);
     }
 }
