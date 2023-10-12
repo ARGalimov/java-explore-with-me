@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS ratings cascade;
 DROP TABLE IF EXISTS compilation_events cascade;
 DROP TABLE IF EXISTS compilations cascade;
 DROP TABLE IF EXISTS requests cascade;
@@ -63,4 +64,12 @@ CREATE TABLE IF NOT EXISTS compilation_events (
     event_id       BIGINT NOT NULL,
     CONSTRAINT compilation_events_null_fk FOREIGN KEY (event_id) REFERENCES events (id),
     CONSTRAINT events_compilation_null_fk FOREIGN KEY (compilation_id) REFERENCES compilations (id)
+);
+
+CREATE TABLE IF NOT EXISTS ratings (
+    event_id BIGINT      NOT NULL,
+    user_id  BIGINT      NOT NULL,
+    rate     VARCHAR(16) NOT NULL,
+    CONSTRAINT ratings_users_null_fk FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT ratings_events_null_fk FOREIGN KEY (event_id) REFERENCES events (id)
 );

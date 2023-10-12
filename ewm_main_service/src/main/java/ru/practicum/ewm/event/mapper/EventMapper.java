@@ -12,6 +12,7 @@ import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.location.mapper.LocationMapper;
 import ru.practicum.ewm.location.model.Location;
+import ru.practicum.ewm.rating.dto.RatingDto;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.request.model.RequestStatus;
 import ru.practicum.ewm.user.mapper.UserMapper;
@@ -50,7 +51,7 @@ public class EventMapper {
                 .build();
     }
 
-    public static EventFullDto toFullDto(Event event, Integer views) {
+    public static EventFullDto toFullDto(Event event, Integer views, RatingDto rating) {
         return EventFullDto.childBuilder()
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.toDto(event.getCategory()))
@@ -68,10 +69,12 @@ public class EventMapper {
                 .state(event.getState())
                 .title(event.getTitle())
                 .views(views)
+                .likes(Objects.isNull(rating.getLikes()) ? 0 : rating.getLikes())
+                .dislikes(Objects.isNull(rating.getDislikes()) ? 0 : rating.getDislikes())
                 .build();
     }
 
-    public static EventShortDto toShortDto(Event event, Integer views) {
+    public static EventShortDto toShortDto(Event event, Integer views, RatingDto rating) {
         return EventShortDto.builder()
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.toDto(event.getCategory()))
@@ -82,6 +85,8 @@ public class EventMapper {
                 .paid(event.getPaid())
                 .title(event.getTitle())
                 .views(views)
+                .likes(firstOrDefault(rating.getLikes(), 0))
+                .dislikes(firstOrDefault(rating.getDislikes(), 0))
                 .build();
     }
 
@@ -111,22 +116,18 @@ public class EventMapper {
                 .build();
     }
 
-    private static <T> T firstOrDefault(T value, T defaultValue) {
-        return Objects.nonNull(value) ? value : defaultValue;
-    }
-
-    public static List<EventShortDto> toShortDtos(List<Event> events, Map<Integer, Integer> views) {
+    public static List<EventShortDto> toShortDtos(List<Event> events, Map<Integer, Integer> views, Map<Integer, RatingDto> ratings) {
         List<EventShortDto> shortsDtos = new ArrayList<>();
         for (Event event : events) {
-            shortsDtos.add(toShortDto(event, views.get(event.getId())));
+            shortsDtos.add(toShortDto(event, views.get(event.getId()), ratings.get(event.getId())));
         }
         return shortsDtos;
     }
 
-    public static List<EventFullDto> toFullDtos(List<Event> events, Map<Integer, Integer> views) {
+    public static List<EventFullDto> toFullDtos(List<Event> events, Map<Integer, Integer> views, Map<Integer, RatingDto> ratings) {
         List<EventFullDto> fullDtos = new ArrayList<>();
         for (Event event : events) {
-            fullDtos.add(toFullDto(event, views.get(event.getId())));
+            fullDtos.add(toFullDto(event, views.get(event.getId()), ratings.get(event.getId())));
         }
         return fullDtos;
     }
@@ -160,5 +161,9 @@ public class EventMapper {
         if (Objects.equals(event.getState(), State.PUBLISHED) || Objects.equals(event.getState(), State.CANCELED)) {
             throw new ConflictException(INCORRECT_EVENT_STATE_MSG, INCORRECT_EVENT_STATE_REASON);
         }
+    }
+
+    private static <T> T firstOrDefault(T value, T defaultValue) {
+        return Objects.nonNull(value) ? value : defaultValue;
     }
 }
